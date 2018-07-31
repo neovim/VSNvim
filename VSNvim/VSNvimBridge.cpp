@@ -7,34 +7,6 @@
 #include "VSNvimTextView.h"
 #include "TextViewCreationListener.h"
 
-namespace VSNvim
-{
-template<typename TCallback>
-static void QueueNvimAction(TCallback callback)
-{
-  static_assert(sizeof(TCallback) <= sizeof(nvim::Event::argv),
-                "The callback is too big.");
-
-  nvim::Event event;
-  event.handler = [](void** argv)
-  {
-    (*reinterpret_cast<TCallback*>(argv))();
-  };
-  new (reinterpret_cast<TCallback*>(&event.argv))
-    TCallback(std::move(callback));
-  nvim::loop_schedule(&nvim::main_loop, event);
-}
-
-void SendInput(std::unique_ptr<std::string>&& input)
-{
-  QueueNvimAction([input = std::move(input)]()
-  {
-    nvim::String nvim_str{ input->data(), input->length() };
-    nvim_input(nvim_str);
-  });
-}
-} // namespace VSNvim
-
 extern "C"
 {
 static VSNvim::VSNvimTextView^ GetTextView(void* vsnvim_data)
@@ -106,6 +78,9 @@ void vsnvim_ui_start()
     const auto text_view =
       *reinterpret_cast<gcroot<VSNvim::VSNvimTextView^>*>(
         nvim::curbuf->vsnvim_data);
+    const auto cursor = &nvim::curwin->w_cursor;
+    text_view->CursorGoto(cursor->lnum, cursor->col);
+    text_view->Scroll(nvim::curwin->w_topline);
   };
 
   memset(ui->ui_ext, 0, sizeof(ui->ui_ext));

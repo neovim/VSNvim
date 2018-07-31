@@ -148,4 +148,23 @@ const nvim::char_u* VSNvimTextView::GetLine(nvim::linenr_T lnum)
   return static_cast<const nvim::char_u*>(
     last_line_->AddrOfPinnedObject().ToPointer());
 }
+
+void VSNvimTextView::CursorGoto(nvim::linenr_T lnum, nvim::colnr_T col)
+{
+  System::Windows::Application::Current->Dispatcher->Invoke(
+    gcnew Action<nvim::linenr_T, nvim::colnr_T>(
+      this, &VSNvimTextView::CursorGotoAction),
+    lnum, col);
+}
+
+void VSNvimTextView::CursorGotoAction(nvim::linenr_T lnum, nvim::colnr_T col)
+{
+  if (text_view_->IsClosed || text_view_->InLayout)
+  {
+    return;
+  }
+
+  auto line_start = GetLineFromNumber(lnum)->Start;
+  text_view_->Caret->MoveTo(line_start.Add(col));
+}
 } // namespace VSNvim

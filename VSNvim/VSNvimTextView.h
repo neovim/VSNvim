@@ -8,6 +8,8 @@ public ref class VSNvimTextView
 {
 private:
   Microsoft::VisualStudio::Text::Editor::ITextView^ text_view_;
+  nvim::win_T* nvim_window_;
+  int top_line_;
 
   // Holds a reference to the last accessed line
   // to prevent it from being garbage collected
@@ -27,11 +29,17 @@ private:
   void ReplaceCharAction(nvim::linenr_T lnum, nvim::colnr_T col,
                          System::String^ chr);
 
+  void CursorGotoAction(nvim::linenr_T lnum, nvim::colnr_T col);
+
+  void OnLayoutChanged(System::Object^ sender,
+    Microsoft::VisualStudio::Text::Editor::TextViewLayoutChangedEventArgs^ e);
+
 public:
   const nvim::char_u* GetLine(nvim::linenr_T lnum);
 
   VSNvimTextView::VSNvimTextView(
-    Microsoft::VisualStudio::Text::Editor::ITextView^ text_view);
+    Microsoft::VisualStudio::Text::Editor::ITextView^ text_view,
+    nvim::win_T* nvim_window);
 
   void AppendLine(nvim::linenr_T lnum, nvim::char_u* line, nvim::colnr_T len);
 
@@ -42,6 +50,8 @@ public:
   void ReplaceLine(nvim::linenr_T lnum, nvim::char_u* line);
 
   void ReplaceChar(nvim::linenr_T lnum, nvim::colnr_T col, nvim::char_u chr);
+
+  void CursorGoto(nvim::linenr_T lnum, nvim::colnr_T col);
 
   void SetBufferFlags();
 };
