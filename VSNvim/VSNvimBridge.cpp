@@ -7,6 +7,34 @@
 #include "VSNvimTextView.h"
 #include "TextViewCreationListener.h"
 
+namespace VSNvim
+{
+template<typename TCallback>
+static void QueueNvimAction(TCallback callback)
+{
+  static_assert(sizeof(TCallback) <= sizeof(nvim::Event::argv),
+                "The callback is too big.");
+
+  nvim::Event event;
+  event.handler = [](void** argv)
+  {
+    (*reinterpret_cast<TCallback*>(argv))();
+  };
+  new (reinterpret_cast<TCallback*>(&event.argv))
+    TCallback(std::move(callback));
+  nvim::loop_schedule(&nvim::main_loop, event);
+}
+
+void SendInput(std::unique_ptr<std::string>&& input)
+{
+  QueueNvimAction([input = std::move(input)]()
+  {
+    nvim::String nvim_str{ input->data(), input->length() };
+    nvim_input(nvim_str);
+  });
+}
+} // namespace VSNvim
+
 extern "C"
 {
 static VSNvim::VSNvimTextView^ GetTextView(void* vsnvim_data)
@@ -56,6 +84,11 @@ int vsnvim_replace_char(void* vsnvim_data, nvim::linenr_T lnum,
 void vsnvim_init_buffers()
 {
   VSNvim::TextViewCreationListener::InitBuffer();
+}
+
+int vs_plines_win_nofold(void* vs_data, nvim::linenr_T lnum)
+{
+  return GetTextView(vs_data)->GetPhysicalLinesCount(lnum);
 }
 
 void vsnvim_ui_start()

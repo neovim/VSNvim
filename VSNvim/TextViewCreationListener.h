@@ -25,6 +25,10 @@ public:
   virtual void TextViewCreated(
     Microsoft::VisualStudio::Text::Editor::ITextView^ text_view);
 
+  void OnGotAggregateFocus(System::Object ^sender, System::EventArgs ^e);
+
+  void OnLostAggregateFocus(System::Object ^sender, System::EventArgs ^e);
+
   static void InitBuffer();
 };
 }
