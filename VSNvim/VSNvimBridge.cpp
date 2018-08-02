@@ -7,6 +7,8 @@
 #include "VSNvimTextView.h"
 #include "TextViewCreationListener.h"
 
+nvim::UI* ui;
+
 namespace VSNvim
 {
 template<typename TCallback>
@@ -23,6 +25,22 @@ static void QueueNvimAction(TCallback callback)
   new (reinterpret_cast<TCallback*>(&event.argv))
     TCallback(std::move(callback));
   nvim::loop_schedule(&nvim::main_loop, event);
+}
+
+void ResizeWindow(nvim::win_T* nvim_window, int top_line,
+            int bottom_line, int window_height)
+{
+  QueueNvimAction([nvim_window, top_line, bottom_line, window_height]()
+  {
+    nvim_window->w_topline = top_line;
+    nvim_window->w_botline = bottom_line;
+
+    if (ui->height != window_height)
+    {
+      ui->height = window_height;
+      nvim::ui_refresh();
+    }
+  });
 }
 
 void SendInput(std::unique_ptr<std::string>&& input)
@@ -93,7 +111,7 @@ int vs_plines_win_nofold(void* vs_data, nvim::linenr_T lnum)
 
 void vsnvim_ui_start()
 {
-  auto ui = new nvim::UI();
+  ui = new nvim::UI();
   ui->width = 1;
   ui->height = 1;
   ui->stop = [](nvim::UI* ui)

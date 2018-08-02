@@ -27,8 +27,14 @@ ITextSnapshotLine^ VSNvimTextView::GetLineFromNumber(nvim::linenr_T lnum)
     GetLineFromLineNumber(lnum - 1);
 }
 
-VSNvimTextView::VSNvimTextView(ITextView^ text_view) : text_view_(text_view)
+VSNvimTextView::VSNvimTextView(
+  ITextView^ text_view, nvim::win_T* nvim_window)
+  : text_view_(text_view),
+    nvim_window_(nvim_window)
 {
+  text_view->LayoutChanged +=
+    gcnew System::EventHandler<TextViewLayoutChangedEventArgs^>(
+      this, &VSNvim::VSNvimTextView::OnLayoutChanged);
 }
 
 void VSNvimTextView::AppendLine(nvim::linenr_T lnum, nvim::char_u* line,
@@ -166,5 +172,59 @@ void VSNvimTextView::CursorGotoAction(nvim::linenr_T lnum, nvim::colnr_T col)
 
   auto line_start = GetLineFromNumber(lnum)->Start;
   text_view_->Caret->MoveTo(line_start.Add(col));
+}
+
+static bool IsLineFullyVisible(ITextViewLine^ line)
+{
+  return line->VisibilityState.Equals(VisibilityState::FullyVisible);
+}
+
+static bool IsLineNotFullyVisible(ITextViewLine^ line)
+{
+  return !IsLineFullyVisible(line);
+}
+
+void VSNvimTextView::OnLayoutChanged(
+  Object^ sender, TextViewLayoutChangedEventArgs^ e)
+{
+  const auto lines = text_view_->TextViewLines;
+  using LineList = System::Collections::Generic::IList<ITextViewLine^>;
+  auto lines_adapter =
+    cliext::collection_adapter<LineList>(static_cast<LineList^>(lines));
+
+  const auto first_visible_line_index =
+    lines->GetIndexOfTextLine(lines->FirstVisibleLine);
+  const auto first_visible_line =
+    cliext::find_if(lines_adapter.begin() + first_visible_line_index,
+      lines_adapter.end() - 1, &IsLineFullyVisible).get_cref();
+  const auto top_line_number =
+    first_visible_line->Start.GetContainingLine()->LineNumber + 1;
+  if (top_line_ == top_line_number)
+  {
+    return;
+  }
+  top_line_ = top_line_number;
+
+  const auto last_visible_line_index =
+    lines->GetIndexOfTextLine(lines->LastVisibleLine);
+  const auto first_hidden_line =
+    cliext::find_if(lines_adapter.begin() + last_visible_line_index,
+      lines_adapter.end() - 1, &IsLineNotFullyVisible).get_cref();
+  const auto bottom_line_number =
+    first_hidden_line->Start.GetContainingLine()->LineNumber + 1;
+
+  const auto window_height =
+    static_cast<int>(text_view_->ViewportHeight) / text_view_->LineHeight;
+  VSNvim::ResizeWindow(nvim_window_, top_line_number,
+                 bottom_line_number, window_height);
+}
+
+int VSNvimTextView::GetPhysicalLinesCount(nvim::linenr_T lnum)
+{
+  const auto line = GetLineFromNumber(lnum);
+  const auto line_span = SnapshotSpan(line->Start, line->End);
+  const auto physical_lines = text_view_->TextViewLines->
+    GetTextViewLinesIntersectingSpan(line_span)->Count;
+  return (cliext::max)(physical_lines, 1);
 }
 } // namespace VSNvim

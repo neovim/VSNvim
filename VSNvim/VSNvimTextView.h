@@ -31,6 +31,8 @@ private:
 
   void CursorGotoAction(nvim::linenr_T lnum, nvim::colnr_T col);
 
+  void ScrollAction(nvim::linenr_T lnum);
+
   void OnLayoutChanged(System::Object^ sender,
     Microsoft::VisualStudio::Text::Editor::TextViewLayoutChangedEventArgs^ e);
 
@@ -52,6 +54,10 @@ public:
   void ReplaceChar(nvim::linenr_T lnum, nvim::colnr_T col, nvim::char_u chr);
 
   void CursorGoto(nvim::linenr_T lnum, nvim::colnr_T col);
+
+  void Scroll(nvim::linenr_T lnum);
+
+  int GetPhysicalLinesCount(nvim::linenr_T lnum);
 
   void SetBufferFlags();
 };

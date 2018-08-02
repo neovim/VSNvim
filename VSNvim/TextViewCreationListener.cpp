@@ -182,7 +182,7 @@ void TextViewCreationListener::InitBuffer()
       editor_adapter->GetWpfTextView(active_text_view));
 
   const auto vsnvim_text_view = new gcroot<VSNvim::VSNvimTextView^>(
-      gcnew VSNvim::VSNvimTextView(active_wpf_text_view));
+      gcnew VSNvim::VSNvimTextView(active_wpf_text_view, nvim::curwin));
   nvim::curbuf->vsnvim_data = reinterpret_cast<void*>(vsnvim_text_view);
   nvim::curbuf->b_ml.ml_line_count =
     active_wpf_text_view->TextSnapshot->LineCount;
