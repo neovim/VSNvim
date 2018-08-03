@@ -227,4 +227,18 @@ int VSNvimTextView::GetPhysicalLinesCount(nvim::linenr_T lnum)
     GetTextViewLinesIntersectingSpan(line_span)->Count;
   return (cliext::max)(physical_lines, 1);
 }
+
+void VSNvimTextView::Scroll(nvim::linenr_T lnum)
+{
+  System::Windows::Application::Current->Dispatcher->
+    Invoke(gcnew Action<nvim::linenr_T>(
+      this, &VSNvimTextView::ScrollAction), lnum);
+}
+
+void VSNvimTextView::ScrollAction(nvim::linenr_T lnum)
+{
+  const auto line_start = GetLineFromNumber(lnum)->Start;
+  text_view_->DisplayTextLineContainingBufferPosition(
+    line_start, 0, ViewRelativePosition::Top);
+}
 } // namespace VSNvim
