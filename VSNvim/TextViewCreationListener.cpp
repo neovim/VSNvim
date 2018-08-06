@@ -7,6 +7,7 @@
 #include "nvim.h"
 #include "VSNvimBridge.h"
 #include "VSNvimTextView.h"
+#include "VSNvimPackage.h"
 
 using namespace System::Threading;
 using namespace Microsoft::VisualStudio::Text::Editor;
@@ -91,7 +92,7 @@ static LRESULT CALLBACK KeyboardHookHandler(
   };
 
   const auto key_flags = reinterpret_cast<KeyFlags*>(&l_param);
-  if (key_flags->Released || !is_text_view_focused_)
+  if (!VSNvimPackage::Enabled || key_flags->Released || !is_text_view_focused_)
   {
     return CallNextHookEx(keyboard_hook_, code, w_param, l_param);
   }

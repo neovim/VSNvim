@@ -24,9 +24,12 @@
     <ClCompile Include="VSNvimBridge.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="source.extension.vsixmanifest" />
+    <ClCompile Include="VSNvimPackage.h">
+      <Filter>Header Files</Filter>
+    </ClCompile>
+    <ClCompile Include="VSNvimPackage.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="VSNvimTextView.h">
@@ -41,5 +44,18 @@
     <ClInclude Include="VSNvimBridge.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="VSPackage.resx">
+      <Filter>Resource Files</Filter>
+    </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="source.extension.vsixmanifest">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="VSNvimPackage.vsct">
+      <Filter>Resource Files</Filter>
+    </None>
   </ItemGroup>
 </Project>

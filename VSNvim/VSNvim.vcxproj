@@ -152,6 +152,8 @@
   <ItemGroup>
     <ClCompile Include="TextViewCreationListener.cpp" />
     <ClCompile Include="VSNvimBridge.cpp" />
+    <ClCompile Include="VSNvimPackage.cpp" />
+    <ClCompile Include="VSNvimPackage.h" />
     <ClCompile Include="VSNvimTextView.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -166,6 +168,10 @@
     <None Include="source.extension.vsixmanifest">
       <SubType>Designer</SubType>
     </None>
+    <None Include="VSNvimPackage.vsct" />
+    <VSCTCompile Include="VSNvimPackage.vsct">
+      <ResourceName>Menus.ctmenu</ResourceName>
+    </VSCTCompile>
   </ItemGroup>
   <ItemGroup>
     <Reference Include="Microsoft.VisualStudio.CoreUtility, Version=15.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
@@ -185,6 +191,8 @@
     <Reference Include="System" />
     <Reference Include="System.ComponentModel.Composition" />
     <Reference Include="System.Core" />
+    <Reference Include="System.Design" />
+    <Reference Include="System.Windows.Forms" />
     <Reference Include="WindowsBase" />
   </ItemGroup>
   <ItemGroup>
@@ -192,6 +200,12 @@
     <ClInclude Include="TextViewCreationListener.h" />
     <ClInclude Include="VSNvimBridge.h" />
     <ClInclude Include="VSNvimTextView.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="VSPackage.resx">
+      <MergeWithCTO>true</MergeWithCTO>
+      <ManifestResourceName>VSPackage</ManifestResourceName>
+    </EmbeddedResource>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <Import Project="..\packages\Microsoft.VisualStudio.SDK.EmbedInteropTypes.15.0.10\build\Microsoft.VisualStudio.SDK.EmbedInteropTypes.targets" Condition="Exists('..\packages\Microsoft.VisualStudio.SDK.EmbedInteropTypes.15.0.10\build\Microsoft.VisualStudio.SDK.EmbedInteropTypes.targets')" />
@@ -208,6 +222,6 @@
   </ImportGroup>
   <Import Project="$(VSToolsPath)\VSSDK\Microsoft.VsSDK.targets" Condition="'$(VSToolsPath)' != ''" />
   <!--Provide an empty CoreCompile target to make the build happy-->
-  <Target Name="CoreCompile">
-  </Target>
+  <Target Name="CoreCompile" />
+  <Target Name="BeforeResourceCompile" DependsOnTargets="MergeCtoResource" />
 </Project>
