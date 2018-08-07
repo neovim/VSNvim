@@ -11,8 +11,6 @@ public ref class TextViewCreationListener
   : Microsoft::VisualStudio::Text::Editor::ITextViewCreationListener
 {
 private:
-  static TextViewCreationListener^ text_view_creation_listener_;
-
   [System::ComponentModel::Composition::Import]
   Microsoft::VisualStudio::Shell::SVsServiceProvider^ service_provider_;
   [System::ComponentModel::Composition::Import]
@@ -20,6 +18,14 @@ private:
     ::IVsEditorAdaptersFactoryService^ editor_adaptor_;
 
 public:
+  static TextViewCreationListener^ text_view_creation_listener_;
+
+  Microsoft::VisualStudio::Shell::SVsServiceProvider^
+    GetServiceProvider()
+  {
+    return service_provider_;
+  }
+
   TextViewCreationListener();
 
   virtual void TextViewCreated(

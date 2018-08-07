@@ -1,7 +1,7 @@
 #include "VSNvimBridge.h"
 
 #include <memory>
-#include <vcclr.h> // gcnew
+#include <vcclr.h> // gcroot
 
 #include "nvim.h"
 #include "VSNvimTextView.h"
@@ -107,6 +107,39 @@ void vsnvim_init_buffers()
 int vs_plines_win_nofold(void* vs_data, nvim::linenr_T lnum)
 {
   return GetTextView(vs_data)->GetPhysicalLinesCount(lnum);
+}
+
+void vsnvim_execute_command(const nvim::char_u* command)
+{
+  const auto chr_ptr = reinterpret_cast<const char*>(command);
+  const auto command_str = gcnew System::String(chr_ptr, 0,
+    std::strlen(chr_ptr), System::Text::Encoding::UTF8);
+  const auto split = command_str->Split(gcnew array<System::String^>{ " " }, 2,
+    System::StringSplitOptions::RemoveEmptyEntries);
+  if (!split->Length)
+  {
+    return;
+  }
+  const auto command_name = split[0];
+  const auto command_args = split->Length == 2
+                            ?  split[1]
+                            : System::String::Empty;
+  const auto service_provider =
+      VSNvim::TextViewCreationListener::text_view_creation_listener_->
+      GetServiceProvider();
+  const auto dte = safe_cast<EnvDTE80::DTE2^>(
+    service_provider->GetService(
+      Microsoft::VisualStudio::Shell::Interop::SDTE::typeid));
+  try
+  {
+    dte->ExecuteCommand(command_name, command_args);
+  }
+  catch (...)
+  {
+    // No information useful is provided in the exception.
+    nvim::emsg(reinterpret_cast<nvim::char_u*>(
+      "Failed to execute Visual Studio command"));
+  }
 }
 
 void vsnvim_ui_start()
