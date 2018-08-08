@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
-    <NvimSrcDir Condition=" '$(NvimSrcDir)' == '' ">C:\project\neovim\</NvimSrcDir>
+    <NvimSrcDir Condition=" '$(NvimSrcDir)' == '' ">C:\projects\neovim\</NvimSrcDir>
     <NvimDepsDir Condition=" '$(NvimDepsDir)' == '' ">C:\projects\neovim\.deps\usr\</NvimDepsDir>
     <NvimBuildDir Condition=" '$(NvimBuildDir)' == '' ">C:\projects\neovim\build\</NvimBuildDir>
   </PropertyGroup>

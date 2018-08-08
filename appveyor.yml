@@ -1,0 +1,24 @@
+image: Visual Studio 2017
+platform: x86
+configuration: Release
+shallow_clone: true
+cache:
+ - packages -> **\*.vcxproj
+install:
+ - git clone --branch vsnvim --depth 1 --quiet
+   https://github.com/b-r-o-c-k/neovim.git C:\projects\neovim
+ - cd C:\projects\neovim
+ - mkdir .deps
+ - cd .deps
+ - cmake -G "Visual Studio 15 2017" --config RelWithDebInfo ..\third-party
+ - cmake --build . --config RelWithDebInfo
+ - cd ..
+ - mkdir build
+ - cd build
+ - cmake -G "Visual Studio 15 2017" --config RelWithDebInfo ..
+ - cmake --build . --config RelWithDebInfo --target libnvim
+ - cd %APPVEYOR_BUILD_FOLDER%
+before_build:
+ - nuget restore
+artifacts:
+ - path: '**\*.vsix'
