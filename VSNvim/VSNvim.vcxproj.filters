@@ -30,6 +30,9 @@
     <ClCompile Include="VSNvimPackage.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="VSNvimCaret.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="VSNvimTextView.h">
@@ -42,6 +45,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="VSNvimBridge.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="VSNvimCaret.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="VSNvimCaretBlinkState.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

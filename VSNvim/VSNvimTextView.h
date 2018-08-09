@@ -1,12 +1,14 @@
 #pragma once
 
 #include "nvim.h"
+#include "VSNvimCaret.h"
 
 namespace VSNvim
 {
 public ref class VSNvimTextView
 {
 private:
+  VSNvimCaret caret_;
   Microsoft::VisualStudio::Text::Editor::ITextView^ text_view_;
   nvim::win_T* nvim_window_;
   int top_line_;
@@ -33,15 +35,21 @@ private:
 
   void ScrollAction(nvim::linenr_T lnum);
 
+  void OnEnabled(System::Object^ sender, System::EventArgs^ e);
+
+  void OnDisabled(System::Object^ sender, System::EventArgs^ e);
+
   void OnLayoutChanged(System::Object^ sender,
     Microsoft::VisualStudio::Text::Editor::TextViewLayoutChangedEventArgs^ e);
 
 public:
-  const nvim::char_u* GetLine(nvim::linenr_T lnum);
-
-  VSNvimTextView::VSNvimTextView(
-    Microsoft::VisualStudio::Text::Editor::ITextView^ text_view,
+  VSNvimTextView(
+    Microsoft::VisualStudio::Text::Editor::IWpfTextView^ text_view,
     nvim::win_T* nvim_window);
+
+  VSNvimCaret^ GetCaret();
+
+  const nvim::char_u* GetLine(nvim::linenr_T lnum);
 
   void AppendLine(nvim::linenr_T lnum, nvim::char_u* line, nvim::colnr_T len);
 

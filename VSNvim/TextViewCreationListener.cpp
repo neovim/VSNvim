@@ -92,7 +92,7 @@ static LRESULT CALLBACK KeyboardHookHandler(
   };
 
   const auto key_flags = reinterpret_cast<KeyFlags*>(&l_param);
-  if (!VSNvimPackage::Enabled || key_flags->Released || !is_text_view_focused_)
+  if (!VSNvimPackage::IsEnabled || key_flags->Released || !is_text_view_focused_)
   {
     return CallNextHookEx(keyboard_hook_, code, w_param, l_param);
   }
@@ -168,6 +168,13 @@ void TextViewCreationListener::OnLostAggregateFocus(System::Object ^ sender,
   is_text_view_focused_ = false;
 }
 
+static VSNvimTextView^ CreateVSNvimTextViewAction(
+  IWpfTextView^ text_view, System::IntPtr nvim_window)
+{
+  return gcnew VSNvimTextView(text_view,
+    static_cast<nvim::win_T*>(nvim_window.ToPointer()));
+}
+
 void TextViewCreationListener::InitBuffer()
 {
   const auto service_provider = text_view_creation_listener_->service_provider_;
@@ -179,11 +186,17 @@ void TextViewCreationListener::InitBuffer()
     return;
   }
   const auto editor_adapter = text_view_creation_listener_->editor_adaptor_;
-  const auto active_wpf_text_view = static_cast<ITextView^>(
+  const auto active_wpf_text_view = static_cast<IWpfTextView^>(
       editor_adapter->GetWpfTextView(active_text_view));
 
   const auto vsnvim_text_view = new gcroot<VSNvim::VSNvimTextView^>(
-      gcnew VSNvim::VSNvimTextView(active_wpf_text_view, nvim::curwin));
+    static_cast<VSNvimTextView^>(
+      System::Windows::Application::Current->Dispatcher->Invoke(
+        gcnew System::Func<IWpfTextView^, System::IntPtr, VSNvimTextView^>(
+          &CreateVSNvimTextViewAction),
+          active_wpf_text_view,
+          System::IntPtr(nvim::curwin))));
+
   nvim::curbuf->vsnvim_data = reinterpret_cast<void*>(vsnvim_text_view);
   nvim::curbuf->b_ml.ml_line_count =
     active_wpf_text_view->TextSnapshot->LineCount;

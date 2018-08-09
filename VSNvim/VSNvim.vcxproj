@@ -101,6 +101,7 @@
   <ItemGroup>
     <ClCompile Include="TextViewCreationListener.cpp" />
     <ClCompile Include="VSNvimBridge.cpp" />
+    <ClCompile Include="VSNvimCaret.cpp" />
     <ClCompile Include="VSNvimPackage.cpp" />
     <ClCompile Include="VSNvimPackage.h" />
     <ClCompile Include="VSNvimTextView.cpp" />
@@ -225,9 +226,11 @@
     <Reference Include="WindowsBase" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="VSNvimCaretBlinkState.h" />
     <ClInclude Include="nvim.h" />
     <ClInclude Include="TextViewCreationListener.h" />
     <ClInclude Include="VSNvimBridge.h" />
+    <ClInclude Include="VSNvimCaret.h" />
     <ClInclude Include="VSNvimTextView.h" />
   </ItemGroup>
   <ItemGroup>

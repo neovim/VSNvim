@@ -20,6 +20,7 @@ extern "C" {
 #define _Bool bool
 #define this this_
 
+#include <nvim/api/private/helpers.h>
 #include <nvim/api/ui.h>
 #include <nvim/api/vim.h>
 #include <nvim/buffer_defs.h>

@@ -5,6 +5,8 @@
 #include <cliext/algorithm>
 #include <vcclr.h>
 
+#include "TextViewCreationListener.h"
+#include "VSNvimPackage.h"
 #include "VSNvimBridge.h"
 
 using namespace System;
@@ -27,14 +29,35 @@ ITextSnapshotLine^ VSNvimTextView::GetLineFromNumber(nvim::linenr_T lnum)
     GetLineFromLineNumber(lnum - 1);
 }
 
+static System::Windows::Media::Color GetSelectedTextColor(ITextView^ text_view)
+{
+  const auto format_map_service =
+    TextViewCreationListener::text_view_creation_listener_->format_map_service_;
+  const auto selected_text = format_map_service->
+    GetEditorFormatMap(text_view)->GetProperties("Selected Text");
+  const auto background_color_id =
+    Microsoft::VisualStudio::Text::Classification::EditorFormatDefinition::
+    BackgroundColorId;
+  return static_cast<System::Windows::Media::Color>(
+    selected_text[background_color_id]);
+}
+
 VSNvimTextView::VSNvimTextView(
-  ITextView^ text_view, nvim::win_T* nvim_window)
+  IWpfTextView^ text_view, nvim::win_T* nvim_window)
   : text_view_(text_view),
-    nvim_window_(nvim_window)
+    nvim_window_(nvim_window),
+    caret_(text_view->Caret,
+      GetSelectedTextColor(text_view),
+      text_view->GetAdornmentLayer(
+        TextViewCreationListener::caret_adornment_layer_name_))
 {
   text_view->LayoutChanged +=
     gcnew System::EventHandler<TextViewLayoutChangedEventArgs^>(
       this, &VSNvim::VSNvimTextView::OnLayoutChanged);
+  VSNvimPackage::Enabled +=
+    gcnew System::EventHandler(this, &VSNvimTextView::OnEnabled);
+  VSNvimPackage::Disabled +=
+    gcnew System::EventHandler(this, &VSNvimTextView::OnDisabled);
 }
 
 void VSNvimTextView::AppendLine(nvim::linenr_T lnum, nvim::char_u* line,
@@ -141,6 +164,11 @@ void VSNvimTextView::SetBufferFlags()
   }
 }
 
+VSNvimCaret^ VSNvimTextView::GetCaret()
+{
+  return %caret_;
+}
+
 const nvim::char_u* VSNvimTextView::GetLine(nvim::linenr_T lnum)
 {
   if (last_line_ != nullptr)
@@ -184,9 +212,21 @@ static bool IsLineNotFullyVisible(ITextViewLine^ line)
   return !IsLineFullyVisible(line);
 }
 
+void VSNvimTextView::OnEnabled(System::Object ^ sender, System::EventArgs^ e)
+{
+  caret_.Enable();
+}
+
+void VSNvimTextView::OnDisabled(System::Object ^ sender, System::EventArgs^ e)
+{
+  caret_.Disable();
+}
+
 void VSNvimTextView::OnLayoutChanged(
   Object^ sender, TextViewLayoutChangedEventArgs^ e)
 {
+  caret_.CreateCaretAdornment();
+
   const auto lines = text_view_->TextViewLines;
   using LineList = System::Collections::Generic::IList<ITextViewLine^>;
   auto lines_adapter =

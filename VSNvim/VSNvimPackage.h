@@ -22,6 +22,10 @@ public ref class VSNvimPackage : Microsoft::VisualStudio::Shell::Package
 
   literal System::String^ PackageGuid = "aacd9f2c-b95b-49b3-836c-c9bde586e38f";
 
-  static bool Enabled = true;
+  static bool IsEnabled = true;
+
+  static event System::EventHandler^ Enabled;
+
+  static event System::EventHandler^ Disabled;
 };
 }

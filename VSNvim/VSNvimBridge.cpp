@@ -1,6 +1,7 @@
 #include "VSNvimBridge.h"
 
 #include <memory>
+#include <string_view>
 #include <vcclr.h> // gcroot
 
 #include "nvim.h"
@@ -142,6 +143,85 @@ void vsnvim_execute_command(const nvim::char_u* command)
   }
 }
 
+static bool cursor_enabled_;
+static nvim::Array cursor_styles_;
+
+static void SetCaretOptions(
+  VSNvim::VSNvimCaret^ caret,
+  bool enabled,
+  System::Int64 horizontal,
+  System::Int64 vertical,
+  System::Int64 blink_wait,
+  System::Int64 blink_on,
+  System::Int64 blink_off)
+{
+  caret->SetOptions(
+    enabled,
+    horizontal,
+    vertical,
+    blink_wait,
+    blink_on,
+    blink_off);
+}
+
+static void NvimModeChange(
+  nvim::UI* ui, nvim::String mode, nvim::Integer mode_index)
+{
+  const auto text_view =
+    *reinterpret_cast<gcroot<VSNvim::VSNvimTextView^>*>(
+      nvim::curbuf->vsnvim_data);
+  const auto current_mode = cursor_styles_.items[mode_index];
+  std::string_view cursor_shape;
+  auto cell_percentage = 100ll;
+  auto blink_wait = 0ll;
+  auto blink_on   = 0ll;
+  auto blink_off  = 0ll;
+  const auto dictionary = current_mode.data.dictionary;
+  for (auto i = 0; i < dictionary.size; i++)
+  {
+    const auto item = dictionary.items[i];
+    const auto key = std::string_view(item.key.data, item.key.size);
+    if (key == "cursor_shape")
+    {
+      cursor_shape = std::string_view(
+        item.value.data.string.data, item.value.data.string.size);
+    }
+    else if (key == "cell_percentage")
+    {
+      cell_percentage = static_cast<int>(item.value.data.integer);
+    }
+    else if (key == "blinkwait")
+    {
+      blink_wait = item.value.data.integer;
+    }
+    else if (key == "blinkon")
+    {
+      blink_on = item.value.data.integer;
+    }
+    else if (key == "blinkoff")
+    {
+      blink_off = item.value.data.integer;
+    }
+  }
+
+  System::Windows::Application::Current->Dispatcher->Invoke(
+    gcnew System::Action<VSNvim::VSNvimCaret^,
+      bool,
+      System::Int64,
+      System::Int64,
+      System::Int64,
+      System::Int64,
+      System::Int64>
+      (&SetCaretOptions),
+    text_view->GetCaret(),
+    cursor_enabled_,
+    cursor_shape == "horizontal" ? cell_percentage : 100,
+    cursor_shape == "vertical"   ? cell_percentage : 100,
+    blink_wait,
+    blink_on,
+    blink_off);
+}
+
 void vsnvim_ui_start()
 {
   ui = new nvim::UI();
@@ -157,6 +237,20 @@ void vsnvim_ui_start()
                           nvim::HlAttrs cterm_attrs, nvim::Array info)
   {
   };
+
+  ui->mode_change = NvimModeChange;
+  ui->mode_info_set = [](nvim::UI* ui, nvim::Boolean enabled,
+                         nvim::Array cursor_styles)
+  {
+    cursor_enabled_ = enabled;
+    if (cursor_styles_.items)
+    {
+      nvim::api_free_array(cursor_styles_);
+      cursor_styles_.items = nullptr;
+    }
+    cursor_styles_ = nvim::copy_array(cursor_styles);
+  };
+
   ui->flush = [](nvim::UI* ui)
   {
     const auto text_view =

@@ -24,16 +24,26 @@ void VSNvimPackage::Initialize()
 
 void VSNvimPackage::SetEnabled(System::Object^ sender, System::EventArgs^ e)
 {
-  Enabled = true;
+  IsEnabled = true;
+  Enabled(this, gcnew System::EventArgs());
 }
 
 void VSNvimPackage::SetDisabled(System::Object^ sender, System::EventArgs^ e)
 {
-  Enabled = false;
+  IsEnabled = false;
+  Disabled(this, gcnew System::EventArgs());
 }
 
 void VSNvimPackage::ToggledEnabled(System::Object^ sender, System::EventArgs^ e)
 {
-  Enabled = !Enabled;
+  IsEnabled = !IsEnabled;
+  if (IsEnabled)
+  {
+    Enabled(this, gcnew System::EventArgs());
+  }
+  else
+  {
+    Disabled(this, gcnew System::EventArgs());
+  }
 }
 }
