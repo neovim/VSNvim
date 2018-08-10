@@ -136,7 +136,7 @@ TextViewCreationListener::TextViewCreationListener()
   text_view_creation_listener_ = this;
 }
 
-void TextViewCreationListener::TextViewCreated(ITextView ^ text_view)
+void TextViewCreationListener::TextViewCreated(IWpfTextView^ text_view)
 {
   if (is_nvim_running)
   {

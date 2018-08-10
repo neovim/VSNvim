@@ -3,12 +3,12 @@
 namespace VSNvim
 {
 [System::ComponentModel::Composition::Export(
-  Microsoft::VisualStudio::Text::Editor::ITextViewCreationListener::typeid)]
+  Microsoft::VisualStudio::Text::Editor::IWpfTextViewCreationListener::typeid)]
 [Microsoft::VisualStudio::Utilities::ContentType("any")]
 [Microsoft::VisualStudio::Text::Editor::TextViewRole(
   Microsoft::VisualStudio::Text::Editor::PredefinedTextViewRoles::Editable)]
 public ref class TextViewCreationListener
-  : Microsoft::VisualStudio::Text::Editor::ITextViewCreationListener
+  : Microsoft::VisualStudio::Text::Editor::IWpfTextViewCreationListener
 {
 private:
   [System::ComponentModel::Composition::Import]
@@ -33,7 +33,7 @@ public:
   TextViewCreationListener();
 
   virtual void TextViewCreated(
-    Microsoft::VisualStudio::Text::Editor::ITextView^ text_view);
+    Microsoft::VisualStudio::Text::Editor::IWpfTextView^ text_view);
 
   void OnGotAggregateFocus(System::Object ^sender, System::EventArgs ^e);
 
