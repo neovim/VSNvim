@@ -74,7 +74,7 @@ static std::unordered_map<int, std::string> special_keys_
 };
 
 HHOOK keyboard_hook_;
-bool is_text_view_focused_;
+bool is_text_view_focused_ = false;
 bool is_nvim_running = false;
 
 static LRESULT CALLBACK KeyboardHookHandler(
@@ -136,6 +136,12 @@ TextViewCreationListener::TextViewCreationListener()
   text_view_creation_listener_ = this;
 }
 
+static void OnKeyboardFocusedChanged(System::Object^ sender,
+  System::Windows::DependencyPropertyChangedEventArgs e)
+{
+  is_text_view_focused_ = static_cast<bool>(e.NewValue);
+}
+
 void TextViewCreationListener::TextViewCreated(IWpfTextView^ text_view)
 {
   if (is_nvim_running)
@@ -143,29 +149,16 @@ void TextViewCreationListener::TextViewCreated(IWpfTextView^ text_view)
     return;
   }
 
-  is_text_view_focused_ = false;
-  text_view->GotAggregateFocus += gcnew System::EventHandler(
-      this, &VSNvim::TextViewCreationListener::OnGotAggregateFocus);
-  text_view->LostAggregateFocus += gcnew System::EventHandler(
-      this, &VSNvim::TextViewCreationListener::OnLostAggregateFocus);
+  text_view->VisualElement->IsKeyboardFocusedChanged +=
+    gcnew System::Windows::DependencyPropertyChangedEventHandler(
+      &OnKeyboardFocusedChanged);
+
   keyboard_hook_ = SetWindowsHookEx(WH_KEYBOARD, &KeyboardHookHandler, NULL,
                                     GetCurrentThreadId());
 
   auto thread = gcnew Thread(gcnew ThreadStart(&StartNvim));
   thread->Start();
   is_nvim_running = true;
-}
-
-void TextViewCreationListener::OnGotAggregateFocus(System::Object ^ sender,
-                                                   System::EventArgs ^ e)
-{
-  is_text_view_focused_ = true;
-}
-
-void TextViewCreationListener::OnLostAggregateFocus(System::Object ^ sender,
-                                                    System::EventArgs ^ e)
-{
-  is_text_view_focused_ = false;
 }
 
 static VSNvimTextView^ CreateVSNvimTextViewAction(

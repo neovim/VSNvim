@@ -35,10 +35,6 @@ public:
   virtual void TextViewCreated(
     Microsoft::VisualStudio::Text::Editor::IWpfTextView^ text_view);
 
-  void OnGotAggregateFocus(System::Object ^sender, System::EventArgs ^e);
-
-  void OnLostAggregateFocus(System::Object ^sender, System::EventArgs ^e);
-
   static void InitBuffer();
 
   literal System::String^ caret_adornment_layer_name_ = "VSNvimCaret";
