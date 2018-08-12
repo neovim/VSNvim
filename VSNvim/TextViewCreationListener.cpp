@@ -144,14 +144,15 @@ static void OnKeyboardFocusedChanged(System::Object^ sender,
 
 void TextViewCreationListener::TextViewCreated(IWpfTextView^ text_view)
 {
-  if (is_nvim_running)
-  {
-    return;
-  }
-
   text_view->VisualElement->IsKeyboardFocusedChanged +=
     gcnew System::Windows::DependencyPropertyChangedEventHandler(
       &OnKeyboardFocusedChanged);
+
+  if (is_nvim_running)
+  {
+    VSNvim::CreateBuffer(std::make_unique<gcroot<IWpfTextView^>>(text_view));
+    return;
+  }
 
   keyboard_hook_ = SetWindowsHookEx(WH_KEYBOARD, &KeyboardHookHandler, NULL,
                                     GetCurrentThreadId());
@@ -159,40 +160,5 @@ void TextViewCreationListener::TextViewCreated(IWpfTextView^ text_view)
   auto thread = gcnew Thread(gcnew ThreadStart(&StartNvim));
   thread->Start();
   is_nvim_running = true;
-}
-
-static VSNvimTextView^ CreateVSNvimTextViewAction(
-  IWpfTextView^ text_view, System::IntPtr nvim_window)
-{
-  return gcnew VSNvimTextView(text_view,
-    static_cast<nvim::win_T*>(nvim_window.ToPointer()));
-}
-
-void TextViewCreationListener::InitBuffer()
-{
-  const auto service_provider = text_view_creation_listener_->service_provider_;
-  const auto text_manager = static_cast<IVsTextManager^>(
-        service_provider->GetService(SVsTextManager::typeid));
-  IVsTextView^ active_text_view;
-  if (text_manager->GetActiveView(false, nullptr, active_text_view) != S_OK)
-  {
-    return;
-  }
-  const auto editor_adapter = text_view_creation_listener_->editor_adaptor_;
-  const auto active_wpf_text_view = static_cast<IWpfTextView^>(
-      editor_adapter->GetWpfTextView(active_text_view));
-
-  const auto vsnvim_text_view = new gcroot<VSNvim::VSNvimTextView^>(
-    static_cast<VSNvimTextView^>(
-      System::Windows::Application::Current->Dispatcher->Invoke(
-        gcnew System::Func<IWpfTextView^, System::IntPtr, VSNvimTextView^>(
-          &CreateVSNvimTextViewAction),
-          active_wpf_text_view,
-          System::IntPtr(nvim::curwin))));
-
-  nvim::curbuf->vsnvim_data = reinterpret_cast<void*>(vsnvim_text_view);
-  nvim::curbuf->b_ml.ml_line_count =
-    active_wpf_text_view->TextSnapshot->LineCount;
-  (*vsnvim_text_view)->SetBufferFlags();
 }
 }  // namespace VSNvim

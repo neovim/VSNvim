@@ -6,6 +6,7 @@
 #include <cstdio>
 #include <locale.h>
 #include <math.h>
+#include <string>
 #include <stdint.h>
 #include <stdio.h>
 #include <wchar.h>
@@ -43,4 +44,13 @@ extern "C" {
 // nvim/main.h does not have a definition for nvim_main.
 int nvim_main(int argc, char** argv);
 }
+
+inline nvim::String CreateString(std::string& str)
+{
+  nvim::String nvim_str;
+  nvim_str.data = str.data();
+  nvim_str.size = str.size();
+  return nvim_str;
+}
+
 }

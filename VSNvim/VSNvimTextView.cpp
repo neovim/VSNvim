@@ -45,12 +45,15 @@ static System::Windows::Media::Color GetSelectedTextColor(ITextView^ text_view)
 VSNvimTextView::VSNvimTextView(
   IWpfTextView^ text_view, nvim::win_T* nvim_window)
   : text_view_(text_view),
+    nvim_buffer_(nvim_window->w_buffer),
     nvim_window_(nvim_window),
     caret_(text_view->Caret,
       GetSelectedTextColor(text_view),
       text_view->GetAdornmentLayer(
         TextViewCreationListener::caret_adornment_layer_name_))
 {
+  text_view->GotAggregateFocus +=
+    gcnew System::EventHandler(this, &VSNvimTextView::OnGotAggregateFocus);
   text_view->LayoutChanged +=
     gcnew System::EventHandler<TextViewLayoutChangedEventArgs^>(
       this, &VSNvim::VSNvimTextView::OnLayoutChanged);
@@ -58,6 +61,10 @@ VSNvimTextView::VSNvimTextView(
     gcnew System::EventHandler(this, &VSNvimTextView::OnEnabled);
   VSNvimPackage::Disabled +=
     gcnew System::EventHandler(this, &VSNvimTextView::OnDisabled);
+
+  nvim_buffer_->b_ml.ml_line_count =
+    text_view->TextSnapshot->LineCount;
+  SetBufferFlags();
 }
 
 void VSNvimTextView::AppendLine(nvim::linenr_T lnum, nvim::char_u* line,
@@ -220,6 +227,12 @@ void VSNvimTextView::OnEnabled(System::Object ^ sender, System::EventArgs^ e)
 void VSNvimTextView::OnDisabled(System::Object ^ sender, System::EventArgs^ e)
 {
   caret_.Disable();
+}
+
+void VSNvimTextView::OnGotAggregateFocus(
+  System::Object^ sender, System::EventArgs^ e)
+{
+  VSNvim::SwitchToBuffer(nvim_buffer_);
 }
 
 void VSNvimTextView::OnLayoutChanged(

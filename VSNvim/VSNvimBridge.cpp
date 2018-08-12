@@ -1,12 +1,12 @@
 #include "VSNvimBridge.h"
 
-#include <memory>
 #include <string_view>
-#include <vcclr.h> // gcroot
 
-#include "nvim.h"
 #include "VSNvimTextView.h"
 #include "TextViewCreationListener.h"
+
+using namespace Microsoft::VisualStudio::Text::Editor;
+using namespace Microsoft::VisualStudio::TextManager::Interop;
 
 nvim::UI* ui;
 
@@ -48,8 +48,105 @@ void SendInput(std::unique_ptr<std::string>&& input)
 {
   QueueNvimAction([input = std::move(input)]()
   {
-    nvim::String nvim_str{ input->data(), input->length() };
-    nvim_input(nvim_str);
+    nvim::nvim_input(nvim::CreateString(*input));
+  });
+}
+
+static VSNvimTextView^ CreateVSNvimTextViewAction(
+  IWpfTextView^ text_view, System::IntPtr nvim_window)
+{
+  return gcnew VSNvimTextView(text_view,
+    static_cast<nvim::win_T*>(nvim_window.ToPointer()));
+}
+
+void SwitchToBuffer(nvim::buf_T* buffer)
+{
+  QueueNvimAction([buffer]()
+  {
+    nvim::Error error;
+    nvim::nvim_set_current_buf(buffer->handle, &error);
+  });
+}
+
+void WipeBuffer(nvim::buf_T* buffer)
+{
+  QueueNvimAction([buffer]()
+  {
+    const auto vsnvim_text_view_ptr_ = buffer->vsnvim_data;
+    auto command =
+      std::string("bw! ") + std::to_string(buffer->handle);
+    nvim::Error error;
+    nvim::nvim_command(nvim::CreateString(command), &error);
+    delete vsnvim_text_view_ptr_;
+    buffer->vsnvim_data = nullptr;
+  });
+}
+
+ref struct TextViewClosedHandler
+{
+  nvim::buf_T* nvim_buffer_;
+
+  TextViewClosedHandler(
+    VSNvim::VSNvimTextView^ vsnvim_text_view,
+    nvim::buf_T* nvim_buffer)
+    : nvim_buffer_(nvim_buffer)
+  {
+    auto vsnvim_text_view_ptr = 
+      new gcroot<VSNvim::VSNvimTextView^>(vsnvim_text_view);
+    nvim_buffer->vsnvim_data = reinterpret_cast<void*>(vsnvim_text_view_ptr);
+  }
+
+  void OnTextViewClosed(System::Object^ sender, System::EventArgs^ e)
+  {
+    if (!nvim_buffer_)
+    {
+      return;
+    }
+    WipeBuffer(nvim_buffer_);
+    nvim_buffer_ = nullptr;
+  }
+};
+
+void InitBuffer(IWpfTextView^ text_view)
+{
+  auto vsnvim_text_view = static_cast<VSNvimTextView^>(
+    System::Windows::Application::Current->Dispatcher->Invoke(
+      gcnew System::Func<IWpfTextView^, System::IntPtr, VSNvimTextView^>(
+        &CreateVSNvimTextViewAction),
+      text_view,
+      System::IntPtr(nvim::curwin)));
+  text_view->Closed += gcnew System::EventHandler(
+    gcnew TextViewClosedHandler(vsnvim_text_view, nvim::curbuf),
+    &TextViewClosedHandler::OnTextViewClosed);
+}
+
+void InitFirstBuffer()
+{
+  const auto service_provider =
+    TextViewCreationListener::text_view_creation_listener_->service_provider_;
+  const auto text_manager = static_cast<IVsTextManager^>(
+        service_provider->GetService(SVsTextManager::typeid));
+  IVsTextView^ active_text_view;
+  if (text_manager->GetActiveView(false, nullptr, active_text_view) != S_OK)
+  {
+    return;
+  }
+  const auto editor_adapter =
+    TextViewCreationListener::text_view_creation_listener_->editor_adaptor_;
+  const auto active_wpf_text_view = static_cast<IWpfTextView^>(
+      editor_adapter->GetWpfTextView(active_text_view));
+
+  InitBuffer(active_wpf_text_view);
+}
+
+void CreateBuffer(std::unique_ptr<gcroot<IWpfTextView^>>&& text_view)
+{
+  QueueNvimAction([text_view = std::move(text_view)]()
+  {
+    auto command = std::string("set hidden | enew");
+    nvim::Error error;
+    nvim::nvim_command(nvim::CreateString(command), &error);
+    InitBuffer(*text_view);
   });
 }
 } // namespace VSNvim
@@ -102,7 +199,7 @@ int vsnvim_replace_char(void* vsnvim_data, nvim::linenr_T lnum,
 
 void vsnvim_init_buffers()
 {
-  VSNvim::TextViewCreationListener::InitBuffer();
+  VSNvim::InitFirstBuffer();
 }
 
 int vs_plines_win_nofold(void* vs_data, nvim::linenr_T lnum)

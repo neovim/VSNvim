@@ -10,17 +10,17 @@ namespace VSNvim
 public ref class TextViewCreationListener
   : Microsoft::VisualStudio::Text::Editor::IWpfTextViewCreationListener
 {
-private:
-  [System::ComponentModel::Composition::Import]
-  Microsoft::VisualStudio::Shell::SVsServiceProvider^ service_provider_;
-  [System::ComponentModel::Composition::Import]
-  Microsoft::VisualStudio::Editor
-    ::IVsEditorAdaptersFactoryService^ editor_adaptor_;
-
 public:
   [System::ComponentModel::Composition::Import]
   Microsoft::VisualStudio::Text::Classification::
     IEditorFormatMapService^ format_map_service_;
+
+  [System::ComponentModel::Composition::Import]
+  Microsoft::VisualStudio::Shell::SVsServiceProvider^ service_provider_;
+
+  [System::ComponentModel::Composition::Import]
+  Microsoft::VisualStudio::Editor
+    ::IVsEditorAdaptersFactoryService^ editor_adaptor_;
 
   static TextViewCreationListener^ text_view_creation_listener_;
 
@@ -34,8 +34,6 @@ public:
 
   virtual void TextViewCreated(
     Microsoft::VisualStudio::Text::Editor::IWpfTextView^ text_view);
-
-  static void InitBuffer();
 
   literal System::String^ caret_adornment_layer_name_ = "VSNvimCaret";
 

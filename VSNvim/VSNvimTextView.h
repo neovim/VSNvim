@@ -10,6 +10,7 @@ public ref class VSNvimTextView
 private:
   VSNvimCaret caret_;
   Microsoft::VisualStudio::Text::Editor::ITextView^ text_view_;
+  nvim::buf_T* nvim_buffer_;
   nvim::win_T* nvim_window_;
   int top_line_;
 
@@ -38,6 +39,9 @@ private:
   void OnEnabled(System::Object^ sender, System::EventArgs^ e);
 
   void OnDisabled(System::Object^ sender, System::EventArgs^ e);
+
+  void OnGotAggregateFocus(
+    System::Object^ sender, System::EventArgs^ e);
 
   void OnLayoutChanged(System::Object^ sender,
     Microsoft::VisualStudio::Text::Editor::TextViewLayoutChangedEventArgs^ e);
