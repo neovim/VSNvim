@@ -294,4 +294,52 @@ void VSNvimTextView::ScrollAction(nvim::linenr_T lnum)
   text_view_->DisplayTextLineContainingBufferPosition(
     line_start, 0, ViewRelativePosition::Top);
 }
+
+void VSNvimTextView::SelectText(nvim::pos_T position, NvimTextSelection mode)
+{
+  System::Windows::Application::Current->Dispatcher->
+    Invoke(gcnew Action<nvim::linenr_T, nvim::colnr_T, NvimTextSelection>(
+      this, &VSNvimTextView::SelectTextAction),
+      position.lnum, position.col, mode);
+}
+
+void VSNvimTextView::SelectTextAction(
+  nvim::linenr_T line, nvim::colnr_T col, NvimTextSelection mode)
+{
+  SnapshotPoint position1;
+  SnapshotPoint position2;
+  if (mode == NvimTextSelection::Line)
+  {
+    position1 = text_view_->Caret->Position
+                                  .BufferPosition.GetContainingLine()->End;
+    position2 = GetLineFromNumber(line)->Start;
+  }
+  else
+  {
+    // Add one to include the character at the position of the caret.
+    position1 = text_view_->Caret->Position.BufferPosition + 1;
+    position2 = GetLineFromNumber(line)->Start.Add(col);
+  }
+  const auto reversed = position1 > position2;
+  text_view_->Selection->Select(
+    reversed
+    ? SnapshotSpan(position2, position1)
+    : SnapshotSpan(position1, position2),
+    reversed);
+  text_view_->Selection->Mode =
+    mode == NvimTextSelection::Block
+    ? TextSelectionMode::Box
+    : TextSelectionMode::Stream;
+}
+
+void VSNvimTextView::ClearTextSelection()
+{
+  System::Windows::Application::Current->Dispatcher->
+    Invoke(gcnew Action(this, &VSNvimTextView::ClearTextSelectionAction));
+}
+
+void VSNvimTextView::ClearTextSelectionAction()
+{
+  text_view_->Selection->Clear();
+}
 } // namespace VSNvim

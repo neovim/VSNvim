@@ -24,6 +24,7 @@ extern "C" {
 #include <nvim/api/private/helpers.h>
 #include <nvim/api/ui.h>
 #include <nvim/api/vim.h>
+#include <nvim/ascii.h>
 #include <nvim/buffer_defs.h>
 #include <nvim/event/defs.h>
 #include <nvim/globals.h>

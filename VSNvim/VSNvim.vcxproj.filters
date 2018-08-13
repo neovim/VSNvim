@@ -53,6 +53,9 @@
     <ClInclude Include="VSNvimCaretBlinkState.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="NvimTextSelection.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="VSPackage.resx">

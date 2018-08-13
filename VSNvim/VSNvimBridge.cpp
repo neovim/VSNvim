@@ -240,6 +240,20 @@ void vsnvim_execute_command(const nvim::char_u* command)
   }
 }
 
+static VSNvim::NvimTextSelection GetSelectionType()
+{
+  switch (nvim::VIsual_mode)
+  {
+  default:
+  case 'v':
+    return VSNvim::NvimTextSelection::Normal;
+  case 'V':
+    return VSNvim::NvimTextSelection::Line;
+  case Ctrl_V:
+    return VSNvim::NvimTextSelection::Block;
+  }
+}
+
 static bool cursor_enabled_;
 static nvim::Array cursor_styles_;
 
@@ -356,6 +370,14 @@ void vsnvim_ui_start()
     const auto cursor = &nvim::curwin->w_cursor;
     text_view->CursorGoto(cursor->lnum, cursor->col);
     text_view->Scroll(nvim::curwin->w_topline);
+    if (nvim::VIsual_active)
+    {
+      text_view->SelectText(nvim::VIsual, GetSelectionType());
+    }
+    else
+    {
+      text_view->ClearTextSelection();
+    }
   };
 
   memset(ui->ui_ext, 0, sizeof(ui->ui_ext));

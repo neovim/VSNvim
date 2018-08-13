@@ -226,6 +226,7 @@
     <Reference Include="WindowsBase" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="NvimTextSelection.h" />
     <ClInclude Include="VSNvimCaretBlinkState.h" />
     <ClInclude Include="nvim.h" />
     <ClInclude Include="TextViewCreationListener.h" />

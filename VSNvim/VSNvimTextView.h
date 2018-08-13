@@ -1,6 +1,7 @@
 #pragma once
 
 #include "nvim.h"
+#include "NvimTextSelection.h"
 #include "VSNvimCaret.h"
 
 namespace VSNvim
@@ -36,6 +37,11 @@ private:
 
   void ScrollAction(nvim::linenr_T lnum);
 
+  void SelectTextAction(
+    nvim::linenr_T line, nvim::colnr_T col, NvimTextSelection mode);
+
+  void ClearTextSelectionAction();
+
   void OnEnabled(System::Object^ sender, System::EventArgs^ e);
 
   void OnDisabled(System::Object^ sender, System::EventArgs^ e);
@@ -68,6 +74,10 @@ public:
   void CursorGoto(nvim::linenr_T lnum, nvim::colnr_T col);
 
   void Scroll(nvim::linenr_T lnum);
+
+  void SelectText(nvim::pos_T position, NvimTextSelection mode);
+
+  void ClearTextSelection();
 
   int GetPhysicalLinesCount(nvim::linenr_T lnum);
 
