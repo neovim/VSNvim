@@ -333,6 +333,15 @@ static void NvimModeChange(
     blink_off);
 }
 
+Microsoft::VisualStudio::Shell::Interop::IVsStatusbar^ GetVSStatusBar()
+{
+  const auto service_provider = VSNvim::TextViewCreationListener::
+    text_view_creation_listener_->service_provider_;
+  return static_cast<Microsoft::VisualStudio::Shell::Interop::IVsStatusbar^>(
+      service_provider->GetService(
+        Microsoft::VisualStudio::Shell::Interop::SVsStatusbar::typeid));
+}
+
 void vsnvim_ui_start()
 {
   ui = new nvim::UI();
@@ -362,6 +371,28 @@ void vsnvim_ui_start()
     cursor_styles_ = nvim::copy_array(cursor_styles);
   };
 
+  ui->event = [](nvim::UI* ui, char* name,
+                 nvim::Array args, bool* args_consumed)
+  {
+    if (std::string_view(name) == "cmdline_show")
+    {
+      const auto text = args.items[0].data.array
+                            .items[0].data.array
+                            .items[1].data.string;
+      const auto first_char = args.items[2].data.string;
+      const auto cmdline =
+        gcnew System::String(
+          first_char.data, 0, first_char.size, System::Text::Encoding::UTF8)
+        + gcnew System::String(
+          text.data, 0, text.size, System::Text::Encoding::UTF8);
+      GetVSStatusBar()->SetText(cmdline);
+    }
+    else if (std::string_view(name) == "cmdline_hide")
+    {
+      GetVSStatusBar()->Clear();
+    }
+  };
+
   ui->flush = [](nvim::UI* ui)
   {
     const auto text_view =
@@ -381,6 +412,7 @@ void vsnvim_ui_start()
   };
 
   memset(ui->ui_ext, 0, sizeof(ui->ui_ext));
+  ui->ui_ext[nvim::kUICmdline] = true;
 
   nvim::ui_attach_impl(ui);
 }
