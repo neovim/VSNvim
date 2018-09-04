@@ -1,5 +1,9 @@
 #include "VSNvimTextView.h"
 
+// This #define is a workaround for a regression with the cliext headers.
+// https://developercommunity.visualstudio.com/content/problem/316251/vs-158-broken-stlclr-iterator-debug-level2-error-c.html
+#define _STLCLRDB_REPORT
+
 #include <cliext/utility>
 #include <cliext/adapter>
 #include <cliext/algorithm>
