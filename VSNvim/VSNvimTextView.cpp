@@ -1,6 +1,6 @@
 #include "VSNvimTextView.h"
 
-#include "utility"
+#include <cliext/utility>
 #include <cliext/adapter>
 #include <cliext/algorithm>
 #include <vcclr.h>
