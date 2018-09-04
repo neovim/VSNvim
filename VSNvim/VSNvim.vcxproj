@@ -69,15 +69,16 @@
   <PropertyGroup Condition="'$(Configuration)'=='Debug'">
     <LinkIncremental>true</LinkIncremental>
     <OutDir>Debug\</OutDir>
+    <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)'=='Release'">
     <LinkIncremental>false</LinkIncremental>
     <OutDir>Release\</OutDir>
+    <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
   </PropertyGroup>
   <ItemDefinitionGroup>
     <ClCompile>
       <LanguageStandard>stdcpp17</LanguageStandard>
-      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <AdditionalIncludeDirectories>$([System.IO.Path]::Combine($(NvimSrcDir), src));$([System.IO.Path]::Combine($(NvimBuildDir), include));$([System.IO.Path]::Combine($(NvimBuildDir), config));$([System.IO.Path]::Combine($(NvimBuildDir), src\nvim\auto));$([System.IO.Path]::Combine($(NvimDepsDir), include));%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
