@@ -9,12 +9,15 @@ Status
 ------
 
 This extension is still in the early stages of development. Some
-Neovim features that have not been fully integrated into Visual Studio
+Neovim features have not been fully integrated into Visual Studio
 including:
  - Highlights
- - Completion for insert mode and command line mode
+ - Completion menus for insert mode and command line mode
  - Output from command line mode
  - Opening buffers
+ - Line numbers and signs in the margin
+ - Status lines
+ - Window size and layout
 
 Pre-releases can be downloaded from the AppVeyor build artifacts.
 
